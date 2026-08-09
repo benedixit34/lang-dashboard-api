@@ -9,6 +9,14 @@ export const categories = pgTable("categories", {
 
 });
 
+export const cities = pgTable("cities", {
+  id: serial("id").primaryKey(),
+
+  name: text("name").notNull(),
+
+  imageUrl: text("image_url"),
+})
+
 
 export const learningSets = pgTable("learning_sets", {
 
