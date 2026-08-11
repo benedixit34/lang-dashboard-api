@@ -6,8 +6,7 @@ import { learningSetRoutes}  from '../src/routes/learningSet.routes.js';
 import mediaRoutes from '../src/routes/media.routes.js';
 import vocabularyRoutes from '../src/routes/vocabulary.routes.js';
 import { db } from '../src/db/index.js';
-import { importMediaFromZip } from '../src/services/mediaBulkImportService.js';
-import { importVocabularyFromExcel } from '../src/services/vocabularyBulkImportService.js';
+
 
 jest.mock('../src/db/index.js', () => ({
   db: {
@@ -34,22 +33,35 @@ const mockedDb = db as unknown as {
 };
 
 function createCountBuilder(total: number) {
-  return {
-    from: jest.fn().mockReturnThis(),
-    where: jest.fn().mockResolvedValue([{ count: total }]),
+  const builder: any = {
+    from: jest.fn(),
+    where: jest.fn(),
   };
+
+  builder.from.mockReturnValue(builder);
+  builder.where.mockImplementation(async () => [
+    { count: total },
+  ]);
+
+  return builder;
 }
+
 
 function createRowsBuilder(rows: any[]) {
   const builder: any = {
-    from: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    offset: jest.fn().mockResolvedValue(rows),
+    from: jest.fn(),
+    where: jest.fn(),
+    orderBy: jest.fn(),
+    limit: jest.fn(),
+    offset: jest.fn(),
   };
 
-  builder.where.mockImplementation(() => builder);
+  builder.from.mockReturnValue(builder);
+  builder.where.mockReturnValue(builder);
+  builder.orderBy.mockReturnValue(builder);
+  builder.limit.mockReturnValue(builder);
+
+  builder.offset.mockImplementation(async () => rows);
 
   return builder;
 }
@@ -62,24 +74,51 @@ beforeEach(() => {
       return createCountBuilder(1);
     }
 
-    return createRowsBuilder([{ id: 1, name: 'Sample' }]);
+    return createRowsBuilder([
+      { id: 1, name: "Sample" },
+    ]);
   });
 
-  mockedDb.insert.mockReturnValue({
-    values: jest.fn().mockReturnThis(),
-    returning: jest.fn().mockResolvedValue([{ id: 1, name: 'Created' }]),
-  });
+  const insertBuilder: any = {
+    values: jest.fn(),
+    returning: jest.fn(),
+  };
 
-  mockedDb.update.mockReturnValue({
-    set: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    returning: jest.fn().mockResolvedValue([{ id: 1, name: 'Updated' }]),
-  });
+  insertBuilder.values.mockReturnValue(insertBuilder);
 
-  mockedDb.delete.mockReturnValue({
-    where: jest.fn().mockReturnThis(),
-    returning: jest.fn().mockResolvedValue([{ id: 1 }]),
-  });
+  insertBuilder.returning.mockImplementation(async () => [
+    { id: 1, name: "Created" },
+  ]);
+
+  mockedDb.insert.mockReturnValue(insertBuilder);
+
+  const updateBuilder: any = {
+    set: jest.fn(),
+    where: jest.fn(),
+    returning: jest.fn(),
+  };
+
+  updateBuilder.set.mockReturnValue(updateBuilder);
+  updateBuilder.where.mockReturnValue(updateBuilder);
+
+  updateBuilder.returning.mockImplementation(async () => [
+    { id: 1, name: "Updated" },
+  ]);
+
+  mockedDb.update.mockReturnValue(updateBuilder);
+
+  const deleteBuilder: any = {
+    where: jest.fn(),
+    returning: jest.fn(),
+  };
+
+  deleteBuilder.where.mockReturnValue(deleteBuilder);
+
+  deleteBuilder.returning.mockImplementation(async () => [
+    { id: 1 },
+  ]);
+
+  mockedDb.delete.mockReturnValue(deleteBuilder);
 });
 
 describe('route modules', () => {

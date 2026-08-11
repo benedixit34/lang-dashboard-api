@@ -5,6 +5,9 @@ import { categoryRoutes } from './routes/category.routes.js';
 import { cityRoutes } from './routes/city.routes.js';
 import { learningSetRoutes } from './routes/learningSet.routes.js'
 import mediaRoutes from "./routes/media.routes.js";
+import swaggerUi from "swagger-ui-express";
+
+import { swaggerSpec } from "./config/swagger.js";
 
 
 dotenv.config();
@@ -24,7 +27,7 @@ app.use(`/${process.env.API_PREFIX}/cities`, cityRoutes);
 app.use(`/${process.env.API_PREFIX}/learningsets`, learningSetRoutes);
 app.use(`/${process.env.API_PREFIX}/media`, mediaRoutes);
 
-
+app.use(`/${process.env.API_PREFIX}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.listen(port, () => {
   console.log(`[server]: Server running at http://localhost:${port}`);
 });

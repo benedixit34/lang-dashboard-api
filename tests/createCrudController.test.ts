@@ -36,25 +36,42 @@ const controller = createCrudController({
 });
 
 function createCountBuilder(total: number) {
-  return {
-    from: jest.fn().mockReturnThis(),
-    where: jest.fn().mockResolvedValue([{ count: total }]),
-  };
-}
-
-function createRowsBuilder(rows: any[]) {
-  const builder: any = {
-    from: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    offset: jest.fn().mockResolvedValue(rows),
+  const builder: {
+    from: jest.Mock;
+    where: jest.Mock;
+  } = {
+    from: jest.fn(),
+    where: jest.fn(),
   };
 
-  builder.where.mockImplementation(() => builder);
+  builder.from.mockReturnValue(builder);
+  builder.where.mockImplementation(
+    async () => [{ count: total }]
+  );
 
   return builder;
 }
+
+
+function createRowsBuilder(rows: any[]) {
+  const builder: any = {
+    from: jest.fn(),
+    where: jest.fn(),
+    orderBy: jest.fn(),
+    limit: jest.fn(),
+    offset: jest.fn(),
+  };
+
+  builder.from.mockReturnValue(builder);
+  builder.where.mockReturnValue(builder);
+  builder.orderBy.mockReturnValue(builder);
+  builder.limit.mockReturnValue(builder);
+
+  builder.offset.mockImplementation(async () => rows);
+
+  return builder;
+}
+
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -64,27 +81,49 @@ beforeEach(() => {
       return createCountBuilder(1);
     }
 
-    return createRowsBuilder([{ id: 1, name: 'Sample' }]);
+    return createRowsBuilder([{ id: 1, name: "Sample" }]);
   });
 
-  mockedDb.insert.mockReturnValue({
-    values: jest.fn().mockReturnThis(),
-    returning: jest.fn().mockResolvedValue([{ id: 1, name: 'Created' }]),
-  });
+  const insertBuilder: any = {
+    values: jest.fn(),
+    returning: jest.fn(),
+  };
 
-  mockedDb.update.mockReturnValue({
-    set: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    returning: jest.fn().mockResolvedValue([{ id: 1, name: 'Updated' }]),
-  });
+  insertBuilder.values.mockReturnValue(insertBuilder);
+  insertBuilder.returning.mockImplementation(async () => [
+    { id: 1, name: "Created" },
+  ]);
 
-  mockedDb.delete.mockReturnValue({
-    where: jest.fn().mockReturnThis(),
-    returning: jest.fn().mockResolvedValue([{ id: 1 }]),
-  });
+  mockedDb.insert.mockReturnValue(insertBuilder);
+
+  const updateBuilder: any = {
+    set: jest.fn(),
+    where: jest.fn(),
+    returning: jest.fn(),
+  };
+
+  updateBuilder.set.mockReturnValue(updateBuilder);
+  updateBuilder.where.mockReturnValue(updateBuilder);
+  updateBuilder.returning.mockImplementation(async () => [
+    { id: 1, name: "Updated" },
+  ]);
+
+  mockedDb.update.mockReturnValue(updateBuilder);
+
+  const deleteBuilder: any = {
+    where: jest.fn(),
+    returning: jest.fn(),
+  };
+
+  deleteBuilder.where.mockReturnValue(deleteBuilder);
+  deleteBuilder.returning.mockImplementation(async () => [
+    { id: 1 },
+  ]);
+
+  mockedDb.delete.mockReturnValue(deleteBuilder);
 });
 
-describe('createCrudController', () => {
+describe("createCrudController", () => {
   const next = jest.fn();
 
   function makeResponse() {
@@ -95,16 +134,17 @@ describe('createCrudController', () => {
     } as any;
   }
 
-  it('returns paginated list results', async () => {
+  it("returns paginated list results", async () => {
     const req = {
       query: {},
     } as any;
+
     const res = makeResponse();
 
     await controller.list(req, res, next);
 
     expect(res.json).toHaveBeenCalledWith({
-      data: [{ id: 1, name: 'Sample' }],
+      data: [{ id: 1, name: "Sample" }],
       pagination: {
         page: 1,
         limit: 20,
@@ -116,109 +156,128 @@ describe('createCrudController', () => {
     });
   });
 
-  it('returns one record when found', async () => {
+  it("returns one record when found", async () => {
     const req = {
-      params: { id: '1' },
+      params: { id: "1" },
     } as any;
+
     const res = makeResponse();
 
     await controller.getOne(req, res, next);
 
     expect(res.json).toHaveBeenCalledWith({
-      data: [{ id: 1, name: 'Sample' }][0],
+      data: { id: 1, name: "Sample" },
     });
   });
 
-  it('returns 404 when getOne record is missing', async () => {
+  it("returns 404 when getOne record is missing", async () => {
     mockedDb.select.mockImplementation(() => {
-      return {
-        from: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([]),
+      const builder: any = {
+        from: jest.fn(),
+        where: jest.fn(),
+        limit: jest.fn(),
       };
+
+      builder.from.mockReturnValue(builder);
+      builder.where.mockReturnValue(builder);
+      builder.limit.mockImplementation(async () => []);
+
+      return builder;
     });
 
     const req = {
-      params: { id: '999' },
+      params: { id: "999" },
     } as any;
+
     const res = makeResponse();
 
     await controller.getOne(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Not found',
+      error: "Not found",
     });
   });
 
-  it('returns 400 when required fields are missing on create', async () => {
+  it("returns 400 when required fields are missing on create", async () => {
     const req = {
       body: {},
     } as any;
+
     const res = makeResponse();
 
     await controller.create(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Missing required field(s): name',
+      error: "Missing required field(s): name",
     });
   });
 
-  it('creates a record when data is valid', async () => {
+  it("creates a record when data is valid", async () => {
     const req = {
-      body: { name: 'Created' },
+      body: { name: "Created" },
     } as any;
+
     const res = makeResponse();
 
     await controller.create(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({
-      data: { id: 1, name: 'Created' },
+      data: { id: 1, name: "Created" },
     });
   });
 
-  it('returns 400 when update has no fields', async () => {
+  it("returns 400 when update has no fields", async () => {
     const req = {
-      params: { id: '1' },
+      params: { id: "1" },
       body: {},
     } as any;
+
     const res = makeResponse();
 
     await controller.update(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'No updatable fields provided',
+      error: "No updatable fields provided",
     });
   });
 
-  it('returns 404 when update record is missing', async () => {
-    mockedDb.update.mockReturnValue({
-      set: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      returning: jest.fn().mockResolvedValue([]),
-    });
+  it("returns 404 when update record is missing", async () => {
+    const updateBuilder: any = {
+      set: jest.fn(),
+      where: jest.fn(),
+      returning: jest.fn(),
+    };
+
+    updateBuilder.set.mockReturnValue(updateBuilder);
+    updateBuilder.where.mockReturnValue(updateBuilder);
+    updateBuilder.returning.mockImplementation(async () => []);
+
+    mockedDb.update.mockReturnValue(updateBuilder);
 
     const req = {
-      params: { id: '999' },
-      body: { name: 'Missing' },
+      params: { id: "999" },
+      body: { name: "Missing" },
     } as any;
+
     const res = makeResponse();
 
     await controller.update(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Not found',
+      error: "Not found",
     });
   });
 
-  it('removes a record successfully', async () => {
+  it("removes a record successfully", async () => {
     const req = {
-      params: { id: '1' },
+      params: { id: "1" },
     } as any;
+
     const res = makeResponse();
 
     await controller.remove(req, res, next);
@@ -227,22 +286,28 @@ describe('createCrudController', () => {
     expect(res.send).toHaveBeenCalled();
   });
 
-  it('returns 404 when remove record is missing', async () => {
-    mockedDb.delete.mockReturnValue({
-      where: jest.fn().mockReturnThis(),
-      returning: jest.fn().mockResolvedValue([]),
-    });
+  it("returns 404 when remove record is missing", async () => {
+    const deleteBuilder: any = {
+      where: jest.fn(),
+      returning: jest.fn(),
+    };
+
+    deleteBuilder.where.mockReturnValue(deleteBuilder);
+    deleteBuilder.returning.mockImplementation(async () => []);
+
+    mockedDb.delete.mockReturnValue(deleteBuilder);
 
     const req = {
-      params: { id: '999' },
+      params: { id: "999" },
     } as any;
+
     const res = makeResponse();
 
     await controller.remove(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Not found',
+      error: "Not found",
     });
   });
 });

@@ -40,14 +40,32 @@ const mockedDb = db as unknown as {
 beforeEach(() => {
   jest.clearAllMocks();
 
-  mockedUploadToBackblaze.mockResolvedValue('https://example.com/uploaded-file');
-  mockedImportMediaFromZip.mockResolvedValue([{ imported: 1 }]);
-  mockedImportVocabularyFromExcel.mockResolvedValue([{ imported: 2 }]);
-  mockedDb.insert.mockReturnValue({
-    values: jest.fn().mockReturnThis(),
-    returning: jest.fn().mockResolvedValue([{ id: 1 }]),
-  });
+  mockedUploadToBackblaze.mockImplementation(
+    async () => "https://example.com/uploaded-file"
+  );
+
+  mockedImportMediaFromZip.mockImplementation(
+    async () => [{ imported: 1 }]
+  );
+
+  mockedImportVocabularyFromExcel.mockImplementation(
+    async () => [{ imported: 2 }]
+  );
+
+  const insertBuilder: any = {
+    values: jest.fn(),
+    returning: jest.fn(),
+  };
+
+  insertBuilder.values.mockReturnValue(insertBuilder);
+
+  insertBuilder.returning.mockImplementation(
+    async () => [{ id: 1 }]
+  );
+
+  mockedDb.insert.mockReturnValue(insertBuilder);
 });
+
 
 describe('media.controller', () => {
   const next = jest.fn();
