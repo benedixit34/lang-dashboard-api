@@ -1,7 +1,7 @@
 import { categories } from "../db/schema.js";
 import { createCrudController } from "../utils/createCrudController.js";
 
-const categoryCrud = createCrudController({
+export const categoriesController = createCrudController({
   table: categories,
   idColumn: categories.id,
 
@@ -15,19 +15,3 @@ const categoryCrud = createCrudController({
 
   notFoundMessage: "Category not found",
 });
-
-export const listCategoriesController =
-  categoryCrud.list;
-
-export const getCategoryController =
-  categoryCrud.getOne;
-
-export const createCategoryController =
-  categoryCrud.create;
-
-export const updateCategoryController =
-  categoryCrud.update;
-
-export const deleteCategoryController =
-  categoryCrud.remove;
-

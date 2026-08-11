@@ -1,7 +1,7 @@
 import { cities } from "../db/schema.js";
 import { createCrudController } from "../utils/createCrudController.js";
 
-const cityCrud = createCrudController({
+export const citiesController = createCrudController({
   table: cities,
   idColumn: cities.id,
 
@@ -36,17 +36,3 @@ const cityCrud = createCrudController({
   notFoundMessage: "City not found",
 });
 
-export const listCitiesController =
-  cityCrud.list;
-
-export const getCityController =
-  cityCrud.getOne;
-
-export const createCityController =
-  cityCrud.create;
-
-export const updateCityController =
-  cityCrud.update;
-
-export const deleteCityController =
-  cityCrud.remove;

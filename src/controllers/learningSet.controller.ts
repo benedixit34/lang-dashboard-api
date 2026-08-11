@@ -1,7 +1,7 @@
 import { learningSets } from "../db/schema.js";
 import { createCrudController } from "../utils/createCrudController.js";
 
-const learningSetCrud =
+export const learningSetController =
   createCrudController({
     table: learningSets,
     idColumn: learningSets.id,
@@ -18,17 +18,3 @@ const learningSetCrud =
       "Learning Set not found",
   });
 
-export const listLearningSetsController =
-  learningSetCrud.list;
-
-export const getLearningSetController =
-  learningSetCrud.getOne;
-
-export const createLearningSetController =
-  learningSetCrud.create;
-
-export const updateLearningSetController =
-  learningSetCrud.update;
-
-export const deleteLearningSetController =
-  learningSetCrud.remove;
