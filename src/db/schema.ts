@@ -9,13 +9,29 @@ export const categories = pgTable("categories", {
 
 });
 
+
+export const level = pgTable("levels", {
+
+  id: serial("id").primaryKey(),
+
+  name: text("name").notNull()
+})
+
+
 export const cities = pgTable("cities", {
+
   id: serial("id").primaryKey(),
 
   name: text("name").notNull(),
 
+  country: text("name").notNull(),
+
   imageUrl: text("image_url"),
+
+  levelId: integer("level_id")
+    .references(() => level.id)
 })
+
 
 
 export const learningSets = pgTable("learning_sets", {
@@ -38,6 +54,9 @@ export const vocabulary = pgTable("vocabulary", {
 
   learningSetId: integer("learning_set_id")
     .references(() => learningSets.id),
+
+  cityId: integer("city_id")
+    .references(() => cities.id),
 
   germanWord: text("german_word")
     .notNull(),

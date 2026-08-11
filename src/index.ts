@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { categoryRoutes } from './routes/category.routes.js';
 import { cityRoutes } from './routes/city.routes.js';
 import { learningSetRoutes } from './routes/learningSet.routes.js'
+import mediaRoutes from "./routes/media.routes.js";
 
 
 dotenv.config();
@@ -18,9 +19,11 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 
-app.use('/categories', categoryRoutes);
-app.use('/cities', cityRoutes);
-app.use('/learningsets', learningSetRoutes);
+app.use(`/${process.env.API_PREFIX}/categories`, categoryRoutes);
+app.use(`/${process.env.API_PREFIX}/cities`, cityRoutes);
+app.use(`/${process.env.API_PREFIX}/learningsets`, learningSetRoutes);
+app.use(`/${process.env.API_PREFIX}/media`, mediaRoutes);
+
 
 app.listen(port, () => {
   console.log(`[server]: Server running at http://localhost:${port}`);
