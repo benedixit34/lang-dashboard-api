@@ -1,4 +1,28 @@
-import { pgTable, serial, text, integer } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
+
+
+export const userRoleEnum = pgEnum("user_role", [
+  "user",
+  "admin",
+]);
+
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+
+  email: text("email").notNull().unique(),
+
+  passwordHash: text("password_hash").notNull(),
+
+  name: text("name"),
+
+  role: userRoleEnum("role")
+    .notNull()
+    .default("user"),
+
+  createdAt: timestamp("created_at")
+    .defaultNow()
+    .notNull(),
+});
 
 
 export const categories = pgTable("categories", {

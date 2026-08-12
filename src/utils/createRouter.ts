@@ -1,6 +1,9 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
 
+import { authenticate } from "../middleware/authenticate.js";
+import { authorize } from "../middleware/authorize.js";
+
 interface CrudController {
   list: RequestHandler;
   getOne: RequestHandler;
@@ -14,16 +17,31 @@ export function createCrudRouter(
 ) {
   const router = Router();
 
+  // Public routes
   router.get("/", controller.list);
-
   router.get("/:id", controller.getOne);
 
-  router.post("/", controller.create);
+  // Admin-only routes
+  router.post(
+    "/",
+    authenticate,
+    authorize("admin"),
+    controller.create,
+  );
 
-  router.patch("/:id", controller.update);
+  router.patch(
+    "/:id",
+    authenticate,
+    authorize("admin"),
+    controller.update,
+  );
 
-  router.delete("/:id", controller.remove);
+  router.delete(
+    "/:id",
+    authenticate,
+    authorize("admin"),
+    controller.remove,
+  );
 
   return router;
 }
-

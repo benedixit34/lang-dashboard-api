@@ -1,5 +1,8 @@
 import { Router } from "express";
 
+import { authenticate } from "../middleware/authenticate.js";
+import { authorize } from "../middleware/authorize.js";
+
 import {
   importVocabularyController,
   vocabularyController,
@@ -158,6 +161,8 @@ router.use("/", createCrudRouter(vocabularyController));
  */
 router.post(
   "/import",
+  authenticate,
+  authorize("admin"),
   uploadExcel.single("file"),
   importVocabularyController,
 );

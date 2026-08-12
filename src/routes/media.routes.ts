@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { authenticate } from "../middleware/authenticate.js";
+import { authorize } from "../middleware/authorize.js";
 
 import {
   importMediaController,
@@ -77,6 +79,8 @@ router.post(
  */
 router.post(
   "/upload",
+  authenticate,
+  authorize("admin"),
   uploadSingleImageController,
 );
 
