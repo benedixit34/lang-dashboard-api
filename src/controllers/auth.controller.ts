@@ -7,9 +7,7 @@ import { db } from "../db/index.js";
 import { users } from "../db/schema.js";
 import { createAccessToken } from "../utils/jwt.js";
 
-/**
- * Register a new regular user
- */
+
 export async function registerController(
   req: Request,
   res: Response,
@@ -76,9 +74,7 @@ export async function registerController(
   }
 }
 
-/**
- * Login
- */
+
 export function loginController(
   req: Request,
   res: Response,

@@ -9,6 +9,7 @@ import swaggerUi from "swagger-ui-express";
 
 import { swaggerSpec } from "./config/swagger.js";
 import { vocabularyRoutes } from './routes/vocabulary.routes.js';
+import authRouter from './routes/auth.routes.js';
 
 
 dotenv.config();
@@ -28,7 +29,7 @@ app.use(`/${process.env.API_PREFIX}/cities`, cityRoutes);
 app.use(`/${process.env.API_PREFIX}/learningsets`, learningSetRoutes);
 app.use(`/${process.env.API_PREFIX}/media`, mediaRoutes);
 app.use(`/${process.env.API_PREFIX}/vocabulary`, vocabularyRoutes);
-
+app.use(`/${process.env.API_PREFIX}/auth`, authRouter);
 
 app.use(`/${process.env.API_PREFIX}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.listen(port, () => {
