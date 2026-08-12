@@ -12,7 +12,7 @@ import {
 
 
 
-const vocabularyCrud = createCrudController({
+export const vocabularyController = createCrudController({
   table: vocabulary,
   idColumn: vocabulary.id,
 
@@ -84,20 +84,7 @@ const vocabularyCrud = createCrudController({
 });
 
 
-export const listVocabularyController =
-  vocabularyCrud.list;
 
-
-export const getVocabularyController =
-  vocabularyCrud.getOne;
-
-
-export const updateVocabularyController =
-  vocabularyCrud.update;
-
-
-export const deleteVocabularyController =
-  vocabularyCrud.remove;
 
 
 export async function importVocabularyController(

@@ -1,17 +1,6 @@
+import type { Request, Response, NextFunction } from "express";
 
-import  type {
-  Request,
-  Response,
-  NextFunction,
-} from "express";
-
-import {
-  and,
-  asc,
-  count,
-  eq,
-  type SQL,
-} from "drizzle-orm";
+import { and, asc, count, eq, type SQL } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 
@@ -49,34 +38,24 @@ export function createCrudController({
   orderBy,
   notFoundMessage = "Record not found",
 }: CrudConfig) {
-  
-  async function list(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) {
+  function parseId(value: string | string[] | undefined): number | null {
+    const stringValue = Array.isArray(value) ? value[0] : value;
+    const parsed = Number(stringValue);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  /**
+   * GET /resource
+   */
+  async function list(req: Request, res: Response, next: NextFunction) {
     try {
-    
+      const page = Math.max(Number(req.query.page) || 1, 1);
 
-      const page = Math.max(
-        Number(req.query.page) || 1,
-        1,
-      );
+      const requestedLimit = Number(req.query.limit) || 20;
 
-      const requestedLimit =
-        Number(req.query.limit) || 20;
-
-      // Prevent someone requesting thousands of records
-      const limit = Math.min(
-        Math.max(requestedLimit, 1),
-        100,
-      );
+      const limit = Math.min(Math.max(requestedLimit, 1), 100);
 
       const offset = (page - 1) * limit;
-
-      /**
-       * Filters
-       */
 
       const conditions: SQL[] = [];
 
@@ -84,50 +63,30 @@ export function createCrudController({
         const value = req.query[filter.name];
 
         if (value !== undefined) {
-          conditions.push(
-            eq(
-              filter.column,
-              value as string,
-            ),
-          );
+          conditions.push(eq(filter.column, value as string));
         }
       }
 
-      const where =
-        conditions.length > 0
-          ? and(...conditions)
-          : undefined;
+      const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-  
-      const countResult = await db
+      const countQuery: any = db
         .select({
           count: count(),
         })
-        .from(table)
-        .where(where);
-
-      const total = Number(
-        countResult[0]?.count ?? 0,
-      );
-
-     
-
-      let query = db
-        .select()
         .from(table);
 
-      const rows = await query
-        .where(where)
-        .orderBy(
-          asc(orderBy || idColumn),
-        )
+      const countResult = await (where ? countQuery.where(where) : countQuery);
+
+      const total = Number(countResult[0]?.count ?? 0);
+
+      const rowsQuery: any = db.select().from(table);
+
+      const rows = await (where ? rowsQuery.where(where) : rowsQuery)
+        .orderBy(asc(orderBy || idColumn))
         .limit(limit)
         .offset(offset);
 
-     
-
-      const totalPages =
-        Math.ceil(total / limit);
+      const totalPages = Math.ceil(total / limit);
 
       res.json({
         data: rows,
@@ -138,14 +97,19 @@ export function createCrudController({
           total,
           totalPages,
 
-          hasNextPage:
-            page < totalPages,
+          hasNextPage: page < totalPages,
 
-          hasPreviousPage:
-            page > 1,
+          hasPreviousPage: page > 1,
         },
       });
     } catch (error) {
+      console.error("CRUD list error:", error);
+
+      console.error("Message:", (error as Error).message);
+      console.error("Cause:", (error as any)?.cause);
+      console.error("Code:", (error as any)?.code);
+      console.error("Detail:", (error as any)?.detail);
+      console.error("Hint:", (error as any)?.hint);
       next(error);
     }
   }
@@ -153,21 +117,20 @@ export function createCrudController({
   /**
    * GET /resource/:id
    */
-  async function getOne(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) {
+  async function getOne(req: Request, res: Response, next: NextFunction) {
     try {
+      const id = parseId(req.params.id);
+
+      if (id === null) {
+        return res.status(400).json({
+          error: "Invalid id",
+        });
+      }
+
       const rows = await db
         .select()
         .from(table)
-        .where(
-          eq(
-            idColumn,
-            Number(req.params.id),
-          ),
-        )
+        .where(eq(idColumn, id))
         .limit(1);
 
       const record = rows[0];
@@ -189,43 +152,30 @@ export function createCrudController({
   /**
    * POST /resource
    */
-  async function create(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) {
+  async function create(req: Request, res: Response, next: NextFunction) {
     try {
       const missing = fields
-        .filter(
-          (field) =>
-            field.required &&
-            (
-              req.body[field.name] ===
-                undefined ||
-              req.body[field.name] === ""
-            ),
-        )
+        .filter((field) => {
+          if (!field.required) {
+            return false;
+          }
+
+          const value = req.body[field.name];
+          return value === undefined || value === "" || value === null;
+        })
         .map((field) => field.name);
 
       if (missing.length > 0) {
         return res.status(400).json({
-          error:
-            `Missing required field(s): ${missing.join(", ")}`,
+          error: `Missing required field(s): ${missing.join(", ")}`,
         });
       }
 
-      const values: Record<
-        string,
-        unknown
-      > = {};
+      const values: Record<string, unknown> = {};
 
       for (const field of fields) {
-        if (
-          req.body[field.name] !==
-          undefined
-        ) {
-          values[field.name] =
-            req.body[field.name];
+        if (req.body[field.name] !== undefined) {
+          values[field.name] = req.body[field.name];
         }
       }
 
@@ -247,45 +197,34 @@ export function createCrudController({
   /**
    * PATCH /resource/:id
    */
-  async function update(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) {
+  async function update(req: Request, res: Response, next: NextFunction) {
     try {
-      const values: Record<
-        string,
-        unknown
-      > = {};
+      const values: Record<string, unknown> = {};
 
       for (const field of fields) {
-        if (
-          req.body[field.name] !==
-          undefined
-        ) {
-          values[field.name] =
-            req.body[field.name];
+        if (req.body[field.name] !== undefined) {
+          values[field.name] = req.body[field.name];
         }
       }
 
-      if (
-        Object.keys(values).length === 0
-      ) {
+      if (Object.keys(values).length === 0) {
         return res.status(400).json({
-          error:
-            "No updatable fields provided",
+          error: "No updatable fields provided",
+        });
+      }
+
+      const id = parseId(req.params.id);
+
+      if (id === null) {
+        return res.status(400).json({
+          error: "Invalid id",
         });
       }
 
       const result = await db
         .update(table)
         .set(values as any)
-        .where(
-          eq(
-            idColumn,
-            Number(req.params.id),
-          ),
-        )
+        .where(eq(idColumn, id))
         .returning();
 
       const record = result[0];
@@ -307,23 +246,19 @@ export function createCrudController({
   /**
    * DELETE /resource/:id
    */
-  async function remove(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) {
+  async function remove(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await db
-        .delete(table)
-        .where(
-          eq(
-            idColumn,
-            Number(req.params.id),
-          ),
-        )
-        .returning({
-          id: idColumn,
+      const id = parseId(req.params.id);
+
+      if (id === null) {
+        return res.status(400).json({
+          error: "Invalid id",
         });
+      }
+
+      const result = await db.delete(table).where(eq(idColumn, id)).returning({
+        id: idColumn,
+      });
 
       const record = result[0];
 
