@@ -8,7 +8,7 @@ import {
   createVocabularyController,
 } from '../src/controllers/vocabulary.controller.js';
 import { db } from '../src/db/index.js';
-import { uploadToBackblaze } from '../src/utils/backblaze.js';
+import { uploadToBackblaze } from '../src/services/backblaze.service.js';
 import { importMediaFromZip } from '../src/services/mediaBulkImportService.js';
 import { importVocabularyFromExcel } from '../src/services/vocabularyBulkImportService.js';
 

@@ -1,7 +1,7 @@
 import unzipper from "unzipper";
 import path from "path";
 
-import { uploadToBackblaze } from "../utils/backblaze.js";
+import { uploadToBackblaze } from "./backblaze.service.js";
 
 interface MediaImportResult {
   uploaded: number;

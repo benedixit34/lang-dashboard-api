@@ -4,6 +4,7 @@ import { authorize } from "../middleware/authorize.js";
 
 import {
   importMediaController,
+  listImagesController,
   uploadSingleImageController,
 } from "../controllers/media.controller.js";
 
@@ -82,6 +83,17 @@ router.post(
   authenticate,
   authorize("admin"),
   uploadSingleImageController,
+);
+
+
+
+
+
+router.get(
+  "/images",
+  authenticate,
+  authorize("admin"),
+  listImagesController,
 );
 
 export const mediaRoutes = router;

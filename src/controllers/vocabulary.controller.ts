@@ -3,7 +3,7 @@ import type { Request, Response } from "express";
 import { importVocabularyFromExcel } from "../services/vocabularyBulkImportService.js"
 import { db } from "../db/index.js";
 import { vocabulary } from "../db/schema.js";
-import { uploadToBackblaze } from "../utils/backblaze.js";
+import { uploadToBackblaze } from "../services/backblaze.service.js";
 
 
 import {

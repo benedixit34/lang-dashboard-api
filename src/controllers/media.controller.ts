@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 
 import { importMediaFromZip } from "../services/mediaBulkImportService.js";
-import { uploadToBackblaze } from "../utils/backblaze.js";
+import { uploadToBackblaze, listImagesFromBackblaze, deleteImageFromBackblaze } from "../services/backblaze.service.js";
 
 export async function importMediaController(
   req: Request,
@@ -71,6 +71,73 @@ export async function uploadSingleImageController(
     return res.status(500).json({
       success: false,
       message: error.message || "Failed to upload image",
+    });
+  }
+}
+
+
+
+export async function listImagesController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const images = await listImagesFromBackblaze();
+
+    return res.status(200).json({
+      success: true,
+      data: images,
+      count: images.length,
+    });
+  } catch (error: any) {
+    console.error(
+      "Failed to list images:",
+      error,
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to list images",
+    });
+  }
+}
+
+
+
+
+export async function deleteImageController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const { key } = req.body;
+
+    if (!key) {
+      return res.status(400).json({
+        success: false,
+        message: "Image key is required",
+      });
+    }
+
+    await deleteImageFromBackblaze(key);
+
+    return res.status(200).json({
+      success: true,
+      message: "Image deleted successfully",
+    });
+  } catch (error: any) {
+    console.error(
+      "Delete image error:",
+      error,
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message ||
+        "Failed to delete image",
     });
   }
 }
