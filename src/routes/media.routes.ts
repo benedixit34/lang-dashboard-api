@@ -6,6 +6,7 @@ import {
   importMediaController,
   listImagesController,
   uploadSingleImageController,
+  deleteImageController,
 } from "../controllers/media.controller.js";
 
 import {
@@ -86,8 +87,42 @@ router.post(
 );
 
 
-
-
+/**
+ * @openapi
+ * /api/v1/media/images:
+ *   get:
+ *     tags:
+ *       - Media
+ *     summary: List all images
+ *     description: Retrieve all images stored in media storage.
+ *     responses:
+ *       200:
+ *         description: Images retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   example: 10
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       key:
+ *                         type: string
+ *                         example: vocabulary/images/hallo.webp
+ *                       url:
+ *                         type: string
+ *                         example: https://s3.us-east-005.backblazeb2.com/leximatch/vocabulary/images/hallo.webp
+ *       500:
+ *         description: Internal server error.
+ */
 
 router.get(
   "/images",
@@ -95,6 +130,45 @@ router.get(
   authorize("admin"),
   listImagesController,
 );
+
+
+
+/**
+ * @openapi
+ * /api/v1/media/images:
+ *   delete:
+ *     tags:
+ *       - Media
+ *     summary: Delete an image
+ *     description: Delete an image from media storage using its object key.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - key
+ *             properties:
+ *               key:
+ *                 type: string
+ *                 description: Object key of the image to delete.
+ *                 example: vocabulary/images/hallo.webp
+ *     responses:
+ *       200:
+ *         description: Image deleted successfully.
+ *       400:
+ *         description: Image key is missing.
+ *       500:
+ *         description: Internal server error.
+ */
+router.delete(
+  "/images",
+  authenticate,
+  authorize("admin"),
+  deleteImageController,
+);
+
 
 export const mediaRoutes = router;
 
