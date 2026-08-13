@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, integer, timestamp, uuid } from "drizzle-orm/pg-core";
 
 
 export const userRoleEnum = pgEnum("user_role", [
@@ -7,13 +7,13 @@ export const userRoleEnum = pgEnum("user_role", [
 ]);
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  username: text("username").notNull(),
 
   email: text("email").notNull().unique(),
 
   passwordHash: text("password_hash").notNull(),
-
-  name: text("name"),
 
   role: userRoleEnum("role")
     .notNull()
@@ -27,7 +27,7 @@ export const users = pgTable("users", {
 
 export const categories = pgTable("categories", {
 
-  id: serial("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
 
   name: text("name").notNull(),
 
@@ -36,7 +36,7 @@ export const categories = pgTable("categories", {
 
 export const level = pgTable("levels", {
 
-  id: serial("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
 
   name: text("name").notNull()
 })
@@ -44,7 +44,7 @@ export const level = pgTable("levels", {
 
 export const cities = pgTable("cities", {
 
-  id: serial("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
 
   name: text("name").notNull(),
 
@@ -52,7 +52,8 @@ export const cities = pgTable("cities", {
 
   imageUrl: text("image_url"),
 
-  levelId: integer("level_id")
+  levelId: uuid("level_id")
+    .notNull()
     .references(() => level.id)
 })
 
@@ -60,7 +61,7 @@ export const cities = pgTable("cities", {
 
 export const learningSets = pgTable("learning_sets", {
 
-  id: serial("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
 
   name: text("name").notNull(),
 
@@ -69,17 +70,17 @@ export const learningSets = pgTable("learning_sets", {
 
 export const vocabulary = pgTable("vocabulary", {
 
-  id: serial("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
 
   itemId: text("item_id").notNull(),
 
-  categoryId: integer("category_id")
+  categoryId: uuid("category_id")
     .references(() => categories.id),
 
-  learningSetId: integer("learning_set_id")
+  learningSetId: uuid("learning_set_id")
     .references(() => learningSets.id),
 
-  cityId: integer("city_id")
+  cityId: uuid("city_id")
     .references(() => cities.id),
 
   germanWord: text("german_word")

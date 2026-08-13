@@ -14,12 +14,12 @@ export async function registerController(
   next: NextFunction,
 ) {
   try {
-    const { email, password, name } = req.body;
+    const { username, email, password } = req.body;
 
-    if (!email || !password) {
+    if (!username || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required",
+        message: "Username, email and password are required",
       });
     }
 
@@ -47,15 +47,15 @@ export async function registerController(
     const result = await db
       .insert(users)
       .values({
+        username: username || null,
         email,
         passwordHash,
-        name: name || null,
         role: "user",
       })
       .returning({
         id: users.id,
+        username: users.username,
         email: users.email,
-        name: users.name,
         role: users.role,
         createdAt: users.createdAt,
       });
@@ -109,7 +109,7 @@ export function loginController(
           user: {
             id: user.id,
             email: user.email,
-            name: user.name,
+            username: user.name,
             role: user.role,
           },
         },
