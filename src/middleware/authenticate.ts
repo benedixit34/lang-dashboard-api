@@ -9,7 +9,7 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 export interface AuthUser {
-  id: number;
+  id: string;
   email: string;
   role: "user" | "admin";
 }
