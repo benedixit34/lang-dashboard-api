@@ -1,10 +1,13 @@
 import XLSX from "xlsx";
 import fs from "fs";
+import crypto from "crypto";
 
 import { db } from "../db/index.js";
-import { vocabulary, categories, learningSets } from "../db/schema.js";
-
-import { eq } from "drizzle-orm";
+import {
+  vocabulary,
+  categories,
+  learningSets,
+} from "../db/schema.js";
 
 interface ImportResult {
   imported: number;
@@ -16,7 +19,7 @@ interface ImportResult {
 }
 
 interface VocabularyExcelRow {
-  "Item ID": string;
+  "Item ID"?: string; // Optional
   Category: string;
   "Learning Set": string;
   "German Word": string;
@@ -39,7 +42,6 @@ export async function importVocabularyFromExcel(
   };
 
   try {
-
     const workbook = XLSX.readFile(filePath);
 
     const sheetName = workbook.SheetNames.at(0);
@@ -51,103 +53,271 @@ export async function importVocabularyFromExcel(
     const sheet = workbook.Sheets[sheetName];
 
     if (!sheet) {
-      throw new Error(`Worksheet "${sheetName}" does not exist`);
+      throw new Error(
+        `Worksheet "${sheetName}" does not exist`,
+      );
     }
 
-    const rows = XLSX.utils.sheet_to_json<VocabularyExcelRow>(sheet);
+    const rows =
+      XLSX.utils.sheet_to_json<VocabularyExcelRow>(
+        sheet,
+      );
 
-    const records = [];
+    // =========================
+    // LOAD EXISTING DATA
+    // =========================
 
-    for (let index = 0; index < rows.length; index++) {
-      const row: any = rows[index];
+    const existingCategories = await db
+      .select()
+      .from(categories);
 
+    const existingLearningSets = await db
+      .select()
+      .from(learningSets);
+
+    // =========================
+    // CATEGORY MAP
+    // =========================
+
+    const categoryMap = new Map<string, string>();
+
+    for (const category of existingCategories) {
+      categoryMap.set(
+        category.name.trim().toLowerCase(),
+        category.id,
+      );
+    }
+
+    // =========================
+    // LEARNING SET MAP
+    // =========================
+
+    const learningSetMap = new Map<string, string>();
+
+    for (const learningSet of existingLearningSets) {
+      learningSetMap.set(
+        learningSet.name.trim().toLowerCase(),
+        learningSet.id,
+      );
+    }
+
+    // =========================
+    // VOCABULARY RECORDS
+    // =========================
+
+    const records: Array<{
+      itemId: string;
+      categoryId: string;
+      learningSetId: string;
+      germanWord: string;
+      englishMeaning: string | null;
+      article: string | null;
+      wordType: string | null;
+      difficulty: string | null;
+      imageIdea: string | null;
+      imageUrl: string | null;
+      audioUrl: string | null;
+    }> = [];
+
+    // =========================
+    // PROCESS ROWS
+    // =========================
+
+    for (const [index, row] of rows.entries()) {
       try {
+        // =========================
+        // ITEM ID
+        // =========================
 
-        if (!row["Item ID"] || !row["German Word"]) {
+        const itemId =
+          String(row["Item ID"] ?? "").trim() ||
+          crypto.randomUUID();
+
+        // =========================
+        // GERMAN WORD
+        // =========================
+
+        const germanWord = String(
+          row["German Word"] ?? "",
+        ).trim();
+
+        if (!germanWord) {
           result.errors.push({
             row: index + 2,
-            message: "Item ID and German Word are required",
+            message: "German Word is required",
           });
 
           result.skipped++;
-
           continue;
         }
 
-        const category = await db.query.categories.findFirst({
-          where: eq(categories.name, row.Category),
-        });
+        // =========================
+        // CATEGORY
+        // =========================
 
-        if (!category) {
+        const categoryName = String(
+          row.Category ?? "",
+        ).trim();
+
+        if (!categoryName) {
           result.errors.push({
             row: index + 2,
-            message: `Category "${row.Category}" not found`,
+            message: "Category is required",
           });
 
           result.skipped++;
-
           continue;
         }
 
+        const categoryKey =
+          categoryName.toLowerCase();
 
-        const learningSet = await db.query.learningSets.findFirst({
-          where: eq(learningSets.name, row["Learning Set"]),
-        });
+        let categoryId =
+          categoryMap.get(categoryKey);
 
-        if (!learningSet) {
+        // Create category if it doesn't exist
+        if (!categoryId) {
+          const [newCategory] = await db
+            .insert(categories)
+            .values({
+              name: categoryName,
+            })
+            .returning({
+              id: categories.id,
+            });
+
+          if (!newCategory) {
+            throw new Error(
+              `Failed to create category "${categoryName}"`,
+            );
+          }
+
+          categoryId = newCategory.id;
+
+          categoryMap.set(
+            categoryKey,
+            categoryId,
+          );
+        }
+
+        // =========================
+        // LEARNING SET
+        // =========================
+
+        const learningSetName = String(
+          row["Learning Set"] ?? "",
+        ).trim();
+
+        if (!learningSetName) {
           result.errors.push({
             row: index + 2,
-            message: `Learning Set "${row["Learning Set"]}" not found`,
+            message: "Learning Set is required",
           });
 
           result.skipped++;
-
           continue;
         }
+
+        const learningSetKey =
+          learningSetName.toLowerCase();
+
+        let learningSetId =
+          learningSetMap.get(
+            learningSetKey,
+          );
+
+        // Create learning set if it doesn't exist
+        if (!learningSetId) {
+          const [newLearningSet] =
+            await db
+              .insert(learningSets)
+              .values({
+                name: learningSetName,
+              })
+              .returning({
+                id: learningSets.id,
+              });
+
+          if (!newLearningSet) {
+            throw new Error(
+              `Failed to create learning set "${learningSetName}"`,
+            );
+          }
+
+          learningSetId =
+            newLearningSet.id;
+
+          learningSetMap.set(
+            learningSetKey,
+            learningSetId,
+          );
+        }
+
+        // =========================
+        // VOCABULARY
+        // =========================
 
         records.push({
-          itemId: row["Item ID"],
+          itemId,
 
-          categoryId: category.id,
+          categoryId,
 
-          learningSetId: learningSet.id,
+          learningSetId,
 
-          germanWord: row["German Word"],
+          germanWord,
 
-          englishMeaning: row["English Meaning"],
+          englishMeaning:
+            row["English Meaning"]?.trim() ||
+            null,
 
-          article: row.Article,
+          article:
+            row.Article?.trim() || null,
 
-          wordType: row["Word Type"],
+          wordType:
+            row["Word Type"]?.trim() || null,
 
-          difficulty: row.Difficulty,
+          difficulty:
+            row.Difficulty?.trim() || null,
 
-          imageIdea: row["Image Idea"],
+          imageIdea:
+            row["Image Idea"]?.trim() || null,
 
-          imageUrl: row.Image ?? null,
+          imageUrl:
+            row.Image?.trim() || null,
 
-          audioUrl: row.Audio ?? null,
+          audioUrl:
+            row.Audio?.trim() || null,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         result.errors.push({
           row: index + 2,
-          message: error.message,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to process row",
         });
 
         result.skipped++;
       }
     }
 
+    // =========================
+    // INSERT VOCABULARY
+    // =========================
 
-    if (records.length) {
-      await db.insert(vocabulary).values(records);
+    if (records.length > 0) {
+      await db
+        .insert(vocabulary)
+        .values(records);
     }
 
     result.imported = records.length;
 
     return result;
   } finally {
- 
+    // =========================
+    // DELETE TEMPORARY FILE
+    // =========================
 
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);

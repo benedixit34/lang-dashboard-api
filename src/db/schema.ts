@@ -39,7 +39,16 @@ export const level = pgTable("levels", {
   id: uuid("id").defaultRandom().primaryKey(),
 
   name: text("name").notNull()
-})
+});
+
+
+export const country = pgTable("countries", {
+
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  name: text("name").notNull(),
+
+});
 
 
 export const cities = pgTable("cities", {
@@ -48,7 +57,7 @@ export const cities = pgTable("cities", {
 
   name: text("name").notNull(),
 
-  country: text("name").notNull(),
+  country: text("country").notNull(),
 
   imageUrl: text("image_url"),
 
