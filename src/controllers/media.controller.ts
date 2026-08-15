@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 
-import { importMediaFromZip } from "../services/mediaBulkImportService.js";
+import { importMediaFromZip } from "../services/media.service.js";
 import { uploadToBackblaze, listImagesFromBackblaze, deleteImageFromBackblaze } from "../services/backblaze.service.js";
 
 export async function importMediaController(
@@ -75,6 +75,48 @@ export async function uploadSingleImageController(
   }
 }
 
+
+export async function uploadMultipleImagesController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    if (!req.files || !Array.isArray(req.files)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please upload at least one image",
+      });
+    }
+
+    const files = req.files.map((file) => ({
+      buffer: file.buffer,
+      filename: file.originalname,
+      mimetype: file.mimetype,
+    }));
+
+    const result =
+      await uploadMultipleMedia(files);
+
+    return res.status(200).json({
+      success: true,
+      message: "Images uploaded successfully",
+      data: result,
+    });
+  } catch (error: unknown) {
+    console.error(
+      "Multiple image upload error:",
+      error,
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to upload images",
+    });
+  }
+}
 
 
 export async function listImagesController(

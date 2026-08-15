@@ -6,11 +6,12 @@ import {
   importMediaController,
   listImagesController,
   uploadSingleImageController,
+  uploadMultipleImagesController,
   deleteImageController,
 } from "../controllers/media.controller.js";
 
 import {
-  uploadMediaZip,
+  uploadMediaZip, uploadImages
 } from "../middleware/upload.js";
 
 const router = Router();
@@ -46,6 +47,8 @@ const router = Router();
  */
 router.post(
   "/import",
+  authenticate,
+  authorize('admin'),
   uploadMediaZip.single("file"),
   importMediaController,
 );
@@ -83,6 +86,7 @@ router.post(
   "/upload",
   authenticate,
   authorize("admin"),
+  uploadImages.single("file"),
   uploadSingleImageController,
 );
 
@@ -169,6 +173,14 @@ router.delete(
   deleteImageController,
 );
 
+
+router.post(
+  "/upload/multiple",
+  authenticate,
+  authorize("admin"),
+  uploadImages.array("files", 20),
+  uploadMultipleImagesController,
+);
 
 export const mediaRoutes = router;
 
