@@ -11,7 +11,7 @@ import {
 } from "../controllers/media.controller.js";
 
 import {
-  uploadMediaZip, uploadImages
+  uploadMediaZip, uploadImage, uploadImages
 } from "../middleware/upload.js";
 
 const router = Router();
@@ -86,7 +86,7 @@ router.post(
   "/upload",
   authenticate,
   authorize("admin"),
-  uploadImages.single("file"),
+  uploadImage.single("file"),
   uploadSingleImageController,
 );
 

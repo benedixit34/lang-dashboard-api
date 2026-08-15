@@ -44,9 +44,7 @@ export function createCrudController({
     return Number.isNaN(parsed) ? null : parsed;
   }
 
-  /**
-   * GET /resource
-   */
+  // GET /resource
   async function list(req: Request, res: Response, next: NextFunction) {
     try {
       const page = Math.max(Number(req.query.page) || 1, 1);
@@ -111,9 +109,7 @@ export function createCrudController({
     }
   }
 
-  /**
-   * GET /resource/:id
-   */
+  // GET /resource/:id
   async function getOne(req: Request, res: Response, next: NextFunction) {
     try {
       const id = parseId(req.params.id);
@@ -146,9 +142,7 @@ export function createCrudController({
     }
   }
 
-  /**
-   * POST /resource
-   */
+  //POST /resource
   async function create(req: Request, res: Response, next: NextFunction) {
     try {
       const missing = fields
@@ -191,9 +185,7 @@ export function createCrudController({
     }
   }
 
-  /**
-   * PATCH /resource/:id
-   */
+  //PATCH /resource/:id
   async function update(req: Request, res: Response, next: NextFunction) {
     try {
       const values: Record<string, unknown> = {};
@@ -240,9 +232,7 @@ export function createCrudController({
     }
   }
 
-  /**
-   * DELETE /resource/:id
-   */
+  //DELETE /resource/:id
   async function remove(req: Request, res: Response, next: NextFunction) {
     try {
       const id = parseId(req.params.id);

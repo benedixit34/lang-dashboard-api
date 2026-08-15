@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { createCrudController } from '../src/utils/createCrudController.js';
+import { createCrudController } from '../src/utils/createcontroller.utils.js';
 import { db } from '../src/db/index.js';
 
 jest.mock('../src/db/index.js', () => ({

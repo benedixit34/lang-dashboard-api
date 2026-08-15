@@ -1,14 +1,18 @@
 
 import type { Request, Response } from "express";
-import { importVocabularyFromExcel } from "../services/vocabularyBulkImportService.js"
 import { db } from "../db/index.js";
 import { vocabulary } from "../db/schema.js";
 import { uploadToBackblaze } from "../services/backblaze.service.js";
+import {
+  importVocabularyFromExcel,
+  importVocabularyFromCsv,
+} from "../services/vocabulary.service.js";
+import path from "path";
 
 
 import {
   createCrudController,
-} from "../utils/createCrudController.js";
+} from "../utils/createcontroller.utils.js";
 
 
 
@@ -95,27 +99,62 @@ export async function importVocabularyController(
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: "Please upload an Excel file",
+        message:
+          "Please upload an Excel or CSV file",
       });
     }
 
-    const result = await importVocabularyFromExcel(req.file.path);
+    const extension = path
+      .extname(req.file.originalname)
+      .toLowerCase();
+
+    let result;
+
+    switch (extension) {
+      case ".xlsx":
+      case ".xls":
+        result =
+          await importVocabularyFromExcel(
+            req.file.path,
+          );
+        break;
+
+      case ".csv":
+        result =
+          await importVocabularyFromCsv(
+            req.file.path,
+          );
+        break;
+
+      default:
+        return res.status(400).json({
+          success: false,
+          message:
+            "Only Excel and CSV files are supported",
+        });
+    }
 
     return res.status(200).json({
       success: true,
-      message: "Vocabulary import completed",
+      message:
+        "Vocabulary import completed",
       data: result,
     });
-  } catch (error: any) {
-    console.error("Vocabulary import error:", error);
+  } catch (error: unknown) {
+    console.error(
+      "Vocabulary import error:",
+      error,
+    );
 
     return res.status(500).json({
       success: false,
-      message: error.message || "Failed to import vocabulary",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to import vocabulary",
     });
   }
 }
-
 
 
 

@@ -8,8 +8,8 @@ import {
   vocabularyController,
 } from "../controllers/vocabulary.controller.js";
 
-import { uploadExcel } from "../middleware/upload.js";
-import { createCrudRouter } from "../utils/createRouter.js";
+import { uploadSpreadsheet } from "../middleware/upload.js";
+import { createCrudRouter } from "../utils/createrouter.utils.js";
 
 const router = Router();
 
@@ -163,7 +163,7 @@ router.post(
   "/import",
   authenticate,
   authorize("admin"),
-  uploadExcel.single("file"),
+  uploadSpreadsheet.single("file"),
   importVocabularyController,
 );
 

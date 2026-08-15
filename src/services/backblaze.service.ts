@@ -23,6 +23,8 @@ const s3 = new S3Client({
   responseChecksumValidation: "WHEN_REQUIRED",
 });
 
+
+//Upload Content to Backblaze B2
 export async function uploadToBackblaze(
   buffer: Buffer,
   key: string,
@@ -68,7 +70,7 @@ export async function uploadToBackblaze(
   }
 }
 
-
+//List Images from Backblaze
 export async function listImagesFromBackblaze() {
   const bucket = getEnv("B2_BUCKET_NAME");
 
@@ -122,7 +124,7 @@ export async function listImagesFromBackblaze() {
 }
 
 
-
+//Delete image from backblaze
 export async function deleteImageFromBackblaze(
   key: string,
 ) {

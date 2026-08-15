@@ -10,7 +10,7 @@ import {
 import { db } from '../src/db/index.js';
 import { uploadToBackblaze } from '../src/services/backblaze.service.js';
 import { importMediaFromZip } from '../src/services/media.service.js';
-import { importVocabularyFromExcel } from '../src/services/vocabularyBulkImportService.js';
+import { importVocabularyFromExcel } from '../src/services/vocabulary.service.js';
 
 jest.mock('../src/utils/backblaze.js', () => ({
   uploadToBackblaze: jest.fn(),

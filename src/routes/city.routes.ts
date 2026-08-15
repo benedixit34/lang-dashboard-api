@@ -1,4 +1,4 @@
-import { createCrudRouter } from "../utils/createRouter.js";
+import { createCrudRouter } from "../utils/createrouter.utils.js";
 import { citiesController } from "../controllers/city.controller.js";
 
 /**

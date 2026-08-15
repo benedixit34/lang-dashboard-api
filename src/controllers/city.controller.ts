@@ -1,5 +1,5 @@
 import { cities } from "../db/schema.js";
-import { createCrudController } from "../utils/createCrudController.js";
+import { createCrudController } from "../utils/createcontroller.utils.js";
 
 export const citiesController = createCrudController({
   table: cities,

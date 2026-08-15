@@ -82,6 +82,7 @@ function getContentType(filename: string): string {
 }
 
 
+//Import Media File
 export async function uploadMediaFile(
   file: MediaFile,
 ) {
@@ -114,7 +115,7 @@ export async function uploadMediaFile(
   };
 }
 
-
+//Import Multiple Media Files
 export async function uploadMultipleMedia(
   files: MediaFile[],
 ): Promise<MediaImportResult> {
@@ -156,9 +157,7 @@ export async function uploadMultipleMedia(
   return result;
 }
 
-/**
- * Import media from a ZIP archive.
- */
+//Import media from a ZIP archive.
 export async function importMediaFromZip(
   buffer: Buffer,
 ): Promise<MediaImportResult> {
