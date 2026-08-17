@@ -1,4 +1,3 @@
-
 import type { Request, Response } from "express";
 import { db } from "../db/index.js";
 import { vocabulary } from "../db/schema.js";
@@ -15,8 +14,7 @@ import {
 } from "../utils/createcontroller.utils.js";
 
 
-
-export const vocabularyController = createCrudController({
+const vocabularyCrudController = createCrudController({
   table: vocabulary,
   idColumn: vocabulary.id,
 
@@ -160,7 +158,7 @@ export async function importVocabularyController(
 
 
 
-export async function createVocabularyController(
+async function createVocabularyController(
   req: Request,
   res: Response,
 ) {
@@ -243,3 +241,10 @@ export async function createVocabularyController(
     });
   }
 }
+
+
+
+export const vocabularyController = {
+  ...vocabularyCrudController,
+  create: createVocabularyController,
+};

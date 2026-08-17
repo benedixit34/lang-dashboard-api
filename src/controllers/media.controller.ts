@@ -1,12 +1,16 @@
 import type { Request, Response } from "express";
 
-import { importMediaFromZip } from "../services/media.service.js";
-import { uploadToBackblaze, listImagesFromBackblaze, deleteImageFromBackblaze } from "../services/backblaze.service.js";
+import {
+  importMediaFromZip,
+  uploadMultipleMedia,
+  uploadMediaFile,
+} from "../services/media.service.js";
+import {
+  listImagesFromBackblaze,
+  deleteImageFromBackblaze,
+} from "../services/backblaze.service.js";
 
-export async function importMediaController(
-  req: Request,
-  res: Response,
-) {
+export async function importMediaController(req: Request, res: Response) {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -15,9 +19,7 @@ export async function importMediaController(
       });
     }
 
-    const result = await importMediaFromZip(
-      req.file.buffer,
-    );
+    const result = await importMediaFromZip(req.file.buffer);
 
     return res.status(200).json({
       success: true,
@@ -29,18 +31,12 @@ export async function importMediaController(
 
     return res.status(500).json({
       success: false,
-      message:
-        error.message || "Failed to import media",
+      message: error.message || "Failed to import media",
     });
   }
 }
 
-
-
-export async function uploadSingleImageController(
-  req: Request,
-  res: Response,
-) {
+export async function uploadSingleImageController(req: Request, res: Response) {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -49,20 +45,13 @@ export async function uploadSingleImageController(
       });
     }
 
-    const key = `vocabulary/images/${Date.now()}-${req.file.originalname}`;
-
-    const url = await uploadToBackblaze(
-      req.file.buffer,
-      key,
-      req.file.mimetype,
-    );
+    const results = await uploadMediaFile(req.file);
 
     return res.status(200).json({
       success: true,
       data: {
         filename: req.file.originalname,
-        key,
-        url,
+        results,
       },
     });
   } catch (error: any) {
@@ -74,7 +63,6 @@ export async function uploadSingleImageController(
     });
   }
 }
-
 
 export async function uploadMultipleImagesController(
   req: Request,
@@ -94,8 +82,7 @@ export async function uploadMultipleImagesController(
       mimetype: file.mimetype,
     }));
 
-    const result =
-      await uploadMultipleMedia(files);
+    const result = await uploadMultipleMedia(files);
 
     return res.status(200).json({
       success: true,
@@ -103,26 +90,17 @@ export async function uploadMultipleImagesController(
       data: result,
     });
   } catch (error: unknown) {
-    console.error(
-      "Multiple image upload error:",
-      error,
-    );
+    console.error("Multiple image upload error:", error);
 
     return res.status(500).json({
       success: false,
       message:
-        error instanceof Error
-          ? error.message
-          : "Failed to upload images",
+        error instanceof Error ? error.message : "Failed to upload images",
     });
   }
 }
 
-
-export async function listImagesController(
-  req: Request,
-  res: Response,
-) {
+export async function listImagesController(req: Request, res: Response) {
   try {
     const images = await listImagesFromBackblaze();
 
@@ -132,27 +110,16 @@ export async function listImagesController(
       count: images.length,
     });
   } catch (error: any) {
-    console.error(
-      "Failed to list images:",
-      error,
-    );
+    console.error("Failed to list images:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        error.message ||
-        "Failed to list images",
+      message: error.message || "Failed to list images",
     });
   }
 }
 
-
-
-
-export async function deleteImageController(
-  req: Request,
-  res: Response,
-) {
+export async function deleteImageController(req: Request, res: Response) {
   try {
     const { key } = req.body;
 
@@ -170,16 +137,11 @@ export async function deleteImageController(
       message: "Image deleted successfully",
     });
   } catch (error: any) {
-    console.error(
-      "Delete image error:",
-      error,
-    );
+    console.error("Delete image error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        error.message ||
-        "Failed to delete image",
+      message: error.message || "Failed to delete image",
     });
   }
 }

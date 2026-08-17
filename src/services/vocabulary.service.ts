@@ -52,16 +52,12 @@ interface LookupMaps {
   learningSetMap: Map<string, string>;
 }
 
-/**
- * Normalize a value from an imported row.
- */
+//Normalize a value from an imported row.
 function clean(value: unknown): string {
   return String(value ?? "").trim();
 }
 
-/**
- * Load existing categories and learning sets.
- */
+//Load existing categories and learning sets.
 async function createLookupMaps(): Promise<LookupMaps> {
   const [
     existingCategories,
@@ -95,9 +91,7 @@ async function createLookupMaps(): Promise<LookupMaps> {
   };
 }
 
-/**
- * Find an existing category or create a new one.
- */
+// Find an existing category or create a new one.
 async function getOrCreateCategory(
   name: string,
   categoryMap: Map<string, string>,
@@ -130,9 +124,7 @@ async function getOrCreateCategory(
   return category.id;
 }
 
-/**
- * Find an existing learning set or create a new one.
- */
+//Find an existing learning set or create a new one.
 async function getOrCreateLearningSet(
   name: string,
   learningSetMap: Map<string, string>,
@@ -169,9 +161,7 @@ async function getOrCreateLearningSet(
   return learningSet.id;
 }
 
-/**
- * Validate and transform one imported row.
- */
+//Validate and transform one imported row.
 async function buildVocabularyRecord(
   row: VocabularyRow,
   maps: LookupMaps,
@@ -260,11 +250,7 @@ async function buildVocabularyRecord(
   };
 }
 
-/**
- * Import vocabulary rows into the database.
- *
- * This is shared by both Excel and CSV imports.
- */
+//Import vocabulary rows into the database.
 async function importVocabularyRows(
   rows: VocabularyRow[],
 ): Promise<ImportResult> {
@@ -313,9 +299,7 @@ async function importVocabularyRows(
   return result;
 }
 
-/**
- * Import vocabulary from an Excel file.
- */
+//Import vocabulary from an Excel file.
 export async function importVocabularyFromExcel(
   filePath: string,
 ): Promise<ImportResult> {
@@ -355,9 +339,7 @@ export async function importVocabularyFromExcel(
   }
 }
 
-/**
- * Import vocabulary from a CSV file.
- */
+//Import vocabulary from a CSV file.
 export async function importVocabularyFromCsv(
   filePath: string,
 ): Promise<ImportResult> {
@@ -380,9 +362,7 @@ export async function importVocabularyFromCsv(
   }
 }
 
-/**
- * Remove an uploaded temporary file.
- */
+// Remove an uploaded temporary file.
 function removeTemporaryFile(
   filePath: string,
 ): void {
