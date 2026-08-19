@@ -9,7 +9,7 @@ export const userRoleEnum = pgEnum("user_role", [
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
 
-  username: text("username").notNull(),
+  username: text("username").notNull().unique(),
 
   email: text("email").notNull().unique(),
 
@@ -93,7 +93,7 @@ export const vocabulary = pgTable("vocabulary", {
     .references(() => cities.id),
 
   germanWord: text("german_word")
-    .notNull(),
+    .notNull().unique(),
 
   englishMeaning: text("english_meaning"),
 

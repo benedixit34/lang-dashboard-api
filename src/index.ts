@@ -11,13 +11,37 @@ import { swaggerSpec } from "./config/swagger.js";
 import { vocabularyRoutes } from './routes/vocabulary.routes.js';
 import authRouter from './routes/auth.routes.js';
 import passport from "./config/passport.js";
+import cors from "cors";
+import logger from "./lib/logger.js"
+import { pinoHttp } from "pino-http";
 
 
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://staging.leximatch.app",
+  "https://leximatch.app",
+  process.env.FRONTEND_URL || "http://localhost:5173",
+];
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
 
+app.use(
+  cors({
+    origin: allowedOrigins,
+  }),
+);
+
+
+
 app.use(express.json());
+
+app.use(
+  pinoHttp({
+    logger,
+  }),
+);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello from Express paired with TypeScript!');

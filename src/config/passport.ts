@@ -28,11 +28,12 @@ passport.use(
             message: "Invalid email or password",
           });
         }
-
+       console.log("Stored hash:", user.passwordHash);
         const validPassword = await bcrypt.compare(
           password,
           user.passwordHash,
         );
+        console.log("Password valid:", validPassword);
 
         if (!validPassword) {
           return done(null, false, {

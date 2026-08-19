@@ -9,6 +9,7 @@ import {
   categories,
   learningSets,
 } from "../db/schema.js";
+import { inArray } from "drizzle-orm/sql/expressions/conditions";
 
 interface ImportResult {
   imported: number;
@@ -250,7 +251,7 @@ async function buildVocabularyRecord(
   };
 }
 
-//Import vocabulary rows into the database.
+// Import vocabulary rows into the database.
 async function importVocabularyRows(
   rows: VocabularyRow[],
 ): Promise<ImportResult> {
@@ -262,12 +263,46 @@ async function importVocabularyRows(
 
   const maps = await createLookupMaps();
 
+  // Get all existing vocabulary words.
+  const existingVocabulary = await db
+    .select({
+      germanWord: vocabulary.germanWord,
+    })
+    .from(vocabulary);
+
+  // Normalize existing database words.
+  const existingWords = new Set(
+    existingVocabulary.map((item) =>
+      item.germanWord.trim().toLowerCase(),
+    ),
+  );
+
   const records: VocabularyRecord[] = [];
 
   for (const [index, row] of rows.entries()) {
     const rowNumber = index + 2;
 
     try {
+      const germanWord = clean(
+        row["German Word"],
+      );
+
+      if (!germanWord) {
+        throw new Error(
+          "German Word is required",
+        );
+      }
+
+      // Normalize the imported word.
+      const normalizedWord =
+        germanWord.trim().toLowerCase();
+
+      // Skip if the word already exists.
+      if (existingWords.has(normalizedWord)) {
+        result.skipped++;
+        continue;
+      }
+
       const record =
         await buildVocabularyRecord(
           row,
@@ -275,6 +310,10 @@ async function importVocabularyRows(
         );
 
       records.push(record);
+
+      // Add immediately so duplicates within
+      // the same spreadsheet are also skipped.
+      existingWords.add(normalizedWord);
     } catch (error: unknown) {
       result.errors.push({
         row: rowNumber,
@@ -298,7 +337,6 @@ async function importVocabularyRows(
 
   return result;
 }
-
 //Import vocabulary from an Excel file.
 export async function importVocabularyFromExcel(
   filePath: string,

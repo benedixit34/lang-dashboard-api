@@ -20,13 +20,9 @@ interface CrudFilter {
 interface CrudConfig {
   table: PgTable;
   idColumn: any;
-
   fields: CrudField[];
-
   listFilters?: CrudFilter[];
-
   orderBy?: any;
-
   notFoundMessage?: string;
 }
 
@@ -38,12 +34,19 @@ export function createCrudController({
   orderBy,
   notFoundMessage = "Record not found",
 }: CrudConfig) {
-  function parseId(value: string | string[] | undefined): number | null {
-    const stringValue = Array.isArray(value) ? value[0] : value;
-    const parsed = Number(stringValue);
-    return Number.isNaN(parsed) ? null : parsed;
+ function parseId(
+  value: string | string[] | undefined
+): string | null {
+  const stringValue = Array.isArray(value)
+    ? value[0]
+    : value;
+
+  if (!stringValue) {
+    return null;
   }
 
+  return stringValue;
+}
   // GET /resource
   async function list(req: Request, res: Response, next: NextFunction) {
     try {
@@ -144,6 +147,7 @@ export function createCrudController({
 
   //POST /resource
   async function create(req: Request, res: Response, next: NextFunction) {
+    console.log("CRUD fields:", fields);
     try {
       const missing = fields
         .filter((field) => {

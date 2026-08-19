@@ -10,13 +10,13 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const storage = multer.diskStorage({
+const spreadsheetStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     cb(null, uploadDir);
   },
 
   filename: (_req, file, cb) => {
-    const extension = path.extname(file.originalname);
+    const extension = path.extname(file.originalname).toLowerCase()
 
     cb(
       null,
@@ -25,28 +25,36 @@ const storage = multer.diskStorage({
   },
 });
 
+const spreadsheetFileFilter: multer.Options["fileFilter"] = (
+  _req,
+  file,
+  cb,
+) => {
+  const allowedExtensions = [
+    ".xlsx",
+    ".xls",
+    ".csv",
+  ];
 
-export const uploadExcel = multer({
-  storage,
+  const extension = path
+    .extname(file.originalname)
+    .toLowerCase();
 
-  fileFilter: (_req, file, cb) => {
-    const allowedExtensions = [
-      ".xlsx",
-      ".xls",
-    ];
+  if (!allowedExtensions.includes(extension)) {
+    return cb(
+      new Error(
+        "Only Excel (.xlsx, .xls) and CSV (.csv) files are allowed",
+      ),
+    );
+  }
 
-    const extension = path
-      .extname(file.originalname)
-      .toLowerCase();
+  cb(null, true);
+};
 
-    if (!allowedExtensions.includes(extension)) {
-      return cb(
-        new Error("Only Excel files are allowed"),
-      );
-    }
+export const uploadSpreadsheet = multer({
+  storage: spreadsheetStorage,
 
-    cb(null, true);
-  },
+  fileFilter: spreadsheetFileFilter,
 
   limits: {
     fileSize: 10 * 1024 * 1024,
