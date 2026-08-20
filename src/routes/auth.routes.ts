@@ -1,9 +1,10 @@
 import { Router } from "express";
+import { authenticate } from "../middleware/authenticate.js";
 
 import {
   registerController,
   loginController,
-
+  getCurrentUserController 
 } from "../controllers/auth.controller.js";
 
 const router = Router();
@@ -93,6 +94,13 @@ router.post("/login", loginController);
  *       200:
  *         description: Logout successful
  */
+
+
+router.get(
+  "/me",
+  authenticate,
+  getCurrentUserController,
+);
 
 
 export default router;

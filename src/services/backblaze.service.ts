@@ -1,4 +1,7 @@
-import { PutObjectCommand, ListObjectsV2Command, S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, ListObjectsV2Command, S3Client, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  getSignedUrl,
+} from "@aws-sdk/s3-request-presigner";
 import "dotenv/config";
 
 function getEnv(name: string): string {
@@ -24,14 +27,27 @@ const s3 = new S3Client({
 });
 
 
+export async function getSignedImageUrl(
+  key: string,
+): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: getEnv("B2_BUCKET_NAME"),
+    Key: key,
+  });
+
+  return getSignedUrl(s3, command, {
+    expiresIn: 60 * 60,
+  });
+}
+
 //Upload Content to Backblaze B2
 export async function uploadToBackblaze(
   buffer: Buffer,
   key: string,
   contentType?: string,
 ) {
-  const bucket = process.env.B2_BUCKET_NAME;
-  const endpoint = process.env.B2_ENDPOINT;
+  const bucket = getEnv("B2_BUCKET_NAME");
+  const endpoint = getEnv("B2_ENDPOINT");
 
   if (!bucket) {
     throw new Error("B2_BUCKET_NAME is not configured");
@@ -113,7 +129,7 @@ export async function listImagesFromBackblaze() {
 
       images.push({
         key: object.Key,
-        url: `${getEnv("B2_ENDPOINT")}/${bucket}/${object.Key}`,
+        url: await getSignedImageUrl(object.Key),
       });
     }
 

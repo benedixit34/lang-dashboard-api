@@ -117,3 +117,22 @@ export function loginController(
     },
   )(req, res, next);
 }
+
+
+
+export async function getCurrentUserController(
+  req: Request,
+  res: Response,
+) {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Authentication required",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: req.user,
+  });
+}

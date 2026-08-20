@@ -130,8 +130,6 @@ router.post(
 
 router.get(
   "/images",
-  authenticate,
-  authorize("admin"),
   listImagesController,
 );
 

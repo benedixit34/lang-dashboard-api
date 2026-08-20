@@ -18,7 +18,6 @@ import { pinoHttp } from "pino-http";
 
 
 const allowedOrigins = [
-  "http://localhost:5173",
   "https://staging.leximatch.app",
   "https://leximatch.app",
   process.env.FRONTEND_URL || "http://localhost:5173",
